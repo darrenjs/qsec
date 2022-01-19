@@ -19,9 +19,6 @@ def date_to_datetime(
     )
 
 
-# python interview question: change the following to a generate style implementation
-
-
 def date_range(lower: dt.date, upper: dt.date):
     while lower < upper:
         yield lower
