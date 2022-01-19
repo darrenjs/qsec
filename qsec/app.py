@@ -1,8 +1,10 @@
 import sys
 
+
 class EasyError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
 
 def main(fn):
     try:
