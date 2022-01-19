@@ -150,6 +150,14 @@ def parse_args():
     parser.add_argument(
         "--upto", dest="uptoDt", type=str, help="to date", required=True
     )
+    parser.add_argument(
+        "--interval",
+        dest="interval",
+        type=str,
+        help="interval time",
+        required=False,
+        default="1m",
+    )
     return parser.parse_args()
 
 
@@ -188,14 +196,14 @@ def main():
 
     # If specified interval by the user is not present in valid intervals, break
     if args.interval is not None:
-        if args.interval in valid_intervals:
+        if args.interval not in valid_intervals:
             print(
                 "Specified interval was not considered valid. Please set interval to one of the following:"
             )
             print("1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M")
             sys.exit(1)
 
-    interval = "1m" if args.interval is not None else args.time
+    interval = "1m" if args.interval is None else args.interval
     sid = common.build_assetid(args.sym, "BNC", is_cash=True)
     fetch(args.sym, fromDt, uptoDt, sid, interval)
 
