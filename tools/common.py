@@ -62,4 +62,4 @@ def build_assetid(symbol, shortExch="BNC", is_cash=False):
         else:
             return "_".join([base, short_contract_date(date), shortExch])
     else:
-        raise Excpetion(f"invalid format for symbol, '{symbol}'")
+        raise Exception(f"invalid format for symbol, '{symbol}'")
