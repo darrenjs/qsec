@@ -138,7 +138,7 @@ def fetch(symbol: str, fromDt: dt.date, endDt: dt.date, sid: str, interval: str)
     dates = qsec.time.dates_in_range(fromDt, endDt)
     for d in dates:
         df = fetch_klines_for_date(symbol, d, interval)
-        common.save_dateframe(symbol, d, df, sid, "binance", "bars")
+        common.save_dateframe(symbol, d, df, sid, "binance", f"bars-{interval}")
 
 
 def parse_args():
