@@ -106,23 +106,45 @@ def normalise_klines(df):
 
 def fetch_klines_for_date(symbol: str, kline_date: dt.date, interval: str):
     logging.info("fetching klines for date {}".format(kline_date))
+
+    # t0 and t1 and the start and end times of the date range
     t0 = qsec.time.date_to_datetime(kline_date)
     t1 = qsec.time.date_to_datetime(kline_date + dt.timedelta(days=1))
-    minutes = int((t1 - t0).total_seconds() / 60)  # TODO: detect any fraction?
 
     all_dfs = []
-    requestLimit = 1000
-    requests = [x for x in range(0, minutes, requestLimit)]
-    for x in requests:
-        begTime = t0 + dt.timedelta(minutes=x)
-        endTime = begTime + dt.timedelta(minutes=requestLimit)
-        logging.info("request bars for {} to {}".format(begTime, endTime))
-        begTime = int(begTime.timestamp() * 1000)
-        endTime = int(endTime.timestamp() * 1000)
-        raw_json = call_http_fetch_klines(symbol, begTime, endTime, interval)
+    requestLimit = 1000  # binance constraint
+
+    expected_rows = None
+    if interval == "1m":
+        expected_rows = 1440
+
+    lower = t0
+    while lower < t1:
+        # calc the upper range of the next request
+        upper = min(t1, lower + dt.timedelta(minutes=requestLimit))
+
+        # make the request
+        req_lower = int(lower.timestamp() * 1000)
+        req_upper = int(upper.timestamp() * 1000)
+        raw_json = call_http_fetch_klines(symbol, req_lower, req_upper, interval)
         df = pd.DataFrame(json.loads(raw_json))
-        logging.debug("returned {} rows".format(df.shape[0]))
+        reply_row_count = df.shape[0]
+        logging.debug(f"request returned {reply_row_count} rows")
+
+        # trim the returned dataframe to be within our request range, just in
+        # case exchange has returned additional rows
+        df = df.loc[(df[0] >= req_lower) & (df[0] < req_upper)]
+        if df.shape[0] != reply_row_count:
+            logging.info(
+                "retained {} rows of {} within actual request range".format(
+                    df.shape[0], reply_row_count
+                )
+            )
+
         all_dfs.append(df)
+        lower = upper
+        del df, upper, req_lower, req_upper, raw_json, reply_row_count
+
     df = pd.concat(all_dfs)
     del all_dfs
     df = normalise_klines(df)
@@ -131,6 +153,14 @@ def fetch_klines_for_date(symbol: str, kline_date: dt.date, interval: str):
     t0_ms = np.datetime64(int(t0.timestamp() * 1000), "ms")
     t1_ms = np.datetime64(int(t1.timestamp() * 1000), "ms")
     df = df.loc[(df.index >= t0_ms) & (df.index < t1_ms)]
+
+    if expected_rows and df.shape[0] != expected_rows:
+        logging.warning(
+            "row count mismatch; expected {}, actual {}".format(
+                expected_rows, df.shape[0]
+            )
+        )
+
     return df
 
 
@@ -138,7 +168,9 @@ def fetch(symbol: str, fromDt: dt.date, endDt: dt.date, sid: str, interval: str)
     dates = qsec.time.dates_in_range(fromDt, endDt)
     for d in dates:
         df = fetch_klines_for_date(symbol, d, interval)
-        common.save_dateframe(symbol, d, df, sid, "binance", f"bars-{interval}")
+        common.save_dateframe(
+            symbol, d, df, sid, "binance", f"bars-{interval}", interval
+        )
 
 
 def parse_args():
