@@ -15,16 +15,17 @@ def save_dateframe(
     sid: str,
     venue: str,
     dtype: str,
+    interval: str
 ):
     date_str = date.strftime("%Y%m%d")
     home = str(Path.home())
     path = f"{home}/MDHOME/tickdata-parq/{dtype}/{venue}/{sid}/{date_str}"
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
-    fn = f"{path}/{sid}-{date_str}.parq"
+    fn = f"{path}/{sid}-{interval}-{date_str}.parq"
 
     # meta
-    custom_meta = {"venue": venue, "symbol": symbol, "sid": sid, "dtype": dtype}
+    custom_meta = {"venue": venue, "symbol": symbol, "sid": sid, "dtype": dtype, "interval": interval}
     custom_meta_key = "qsec"
     table = pa.Table.from_pandas(df)
     custom_meta_json = json.dumps(custom_meta)
