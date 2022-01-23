@@ -5,6 +5,7 @@ import pandas as pd
 
 import qsec.logging
 
+
 def parse_binance_spot_exchange_info(fn):
     venue = "binance"
     assetType = "coinpair"
@@ -17,11 +18,8 @@ def parse_binance_spot_exchange_info(fn):
     rows = []
 
     filters_to_ignore = set(
-        ['MAX_NUM_ALGO_ORDERS',
-         'ICEBERG_PARTS',
-         'MARKET_LOT_SIZE',
-         'PERCENT_PRICE'
-        ])
+        ["MAX_NUM_ALGO_ORDERS", "ICEBERG_PARTS", "MARKET_LOT_SIZE", "PERCENT_PRICE"]
+    )
 
     logging.info("ignoring following filters: {}".format(filters_to_ignore))
     for item in symbols:
@@ -39,18 +37,18 @@ def parse_binance_spot_exchange_info(fn):
         row["status"] = item["status"]
 
         # TODO: here I am not supporting the MARKET_LOT_SIZE filter
-        for filter in item['filters'] :
-            filterType = filter['filterType']
-            if filterType == 'LOT_SIZE':
-                row["minQty"] = filter['minQty']
-                row["maxQty"] = filter['maxQty']
-                row["lotQty"] = filter['stepSize']
-            elif filterType == 'MIN_NOTIONAL':
-                row['minNotional'] = filter['minNotional']
-            elif filterType == 'PRICE_FILTER':
-                row['tickSize'] = filter['tickSize']
+        for filter in item["filters"]:
+            filterType = filter["filterType"]
+            if filterType == "LOT_SIZE":
+                row["minQty"] = filter["minQty"]
+                row["maxQty"] = filter["maxQty"]
+                row["lotQty"] = filter["stepSize"]
+            elif filterType == "MIN_NOTIONAL":
+                row["minNotional"] = filter["minNotional"]
+            elif filterType == "PRICE_FILTER":
+                row["tickSize"] = filter["tickSize"]
             elif filterType == "MAX_NUM_ORDERS":
-                row['maxNumOrders'] = filter['maxNumOrders']
+                row["maxNumOrders"] = filter["maxNumOrders"]
             elif filterType in filters_to_ignore:
                 pass
             else:
@@ -62,9 +60,9 @@ def parse_binance_spot_exchange_info(fn):
 
 
 def normalise_contractType(contractType: str) -> str:
-    if (contractType == "PERPETUAL"):
+    if contractType == "PERPETUAL":
         return "perp", "PF"
-    if (contractType in ["CURRENT_QUARTER", "NEXT_QUARTER"]):
+    if contractType in ["CURRENT_QUARTER", "NEXT_QUARTER"]:
         return "future", ""
     print(f"unhandled contract type: {contractType}")
     return None, None
@@ -79,8 +77,9 @@ def simplify_future_native_code(symbol):
 
     year = parts[1][0:2]
     mnth = int(parts[1][2:4])
-    mnthcode = ['F','G','H','K','M','N','Q','U','V','X','Z'][mnth-1]
-    return "_".join([parts[0],mnthcode+year[1],'BNC'])
+    mnthcode = ["F", "G", "H", "K", "M", "N", "Q", "U", "V", "X", "Z"][mnth - 1]
+    return "_".join([parts[0], mnthcode + year[1], "BNC"])
+
 
 def parse_binance_usdfut_exchange_info(fn, venue):
     logging.info("reading file '{}'".format(fn))
@@ -92,11 +91,13 @@ def parse_binance_usdfut_exchange_info(fn, venue):
     rows = []
 
     filters_to_ignore = set(
-        ['MAX_NUM_ALGO_ORDERS',
-         'ICEBERG_PARTS',
-         'MARKET_LOT_SIZE',
-         'PERCENT_PRICE'   # <=== could be useful to enable
-        ])
+        [
+            "MAX_NUM_ALGO_ORDERS",
+            "ICEBERG_PARTS",
+            "MARKET_LOT_SIZE",
+            "PERCENT_PRICE",  # <=== could be useful to enable
+        ]
+    )
 
     logging.info("ignoring following filters: {}".format(filters_to_ignore))
     for item in symbols:
@@ -104,8 +105,8 @@ def parse_binance_usdfut_exchange_info(fn, venue):
         symbol = item["symbol"]
         row["symbol"] = symbol
 
-        assetType, assetShortType = normalise_contractType(item['contractType'])
-        if (assetType is None):
+        assetType, assetShortType = normalise_contractType(item["contractType"])
+        if assetType is None:
             logging.info(f"skipping asset '{symbol}'")
             continue
 
@@ -113,13 +114,12 @@ def parse_binance_usdfut_exchange_info(fn, venue):
         if assetType == "perp" and not symbol.endswith("_PERP"):
             row["assetid"] = f"{symbol}_PF_BNC"
         elif assetType == "perp" and symbol.endswith("_PERP"):
-            row["assetid"] = symbol.replace("_PERP","_PF") + "_BNC"
+            row["assetid"] = symbol.replace("_PERP", "_PF") + "_BNC"
         else:
             row["assetid"] = f"{symbol}_BNC"
 
         if assetType == "future":
             row["assetid"] = simplify_future_native_code(symbol)
-
 
         row["type"] = assetType
         row["venue"] = venue
@@ -140,18 +140,18 @@ def parse_binance_usdfut_exchange_info(fn, venue):
         row["contractType"] = item.get("contractType", None)
 
         # TODO: here I am not supporting the MARKET_LOT_SIZE filter
-        for filter in item['filters'] :
-            filterType = filter['filterType']
-            if filterType == 'LOT_SIZE':
-                row["minQty"] = filter['minQty']
-                row["maxQty"] = filter['maxQty']
-                row["lotQty"] = filter['stepSize']
-            elif filterType == 'MIN_NOTIONAL':
-                row['minNotional'] = filter['notional']
-            elif filterType == 'PRICE_FILTER':
-                row['tickSize'] = filter['tickSize']
+        for filter in item["filters"]:
+            filterType = filter["filterType"]
+            if filterType == "LOT_SIZE":
+                row["minQty"] = filter["minQty"]
+                row["maxQty"] = filter["maxQty"]
+                row["lotQty"] = filter["stepSize"]
+            elif filterType == "MIN_NOTIONAL":
+                row["minNotional"] = filter["notional"]
+            elif filterType == "PRICE_FILTER":
+                row["tickSize"] = filter["tickSize"]
             elif filterType == "MAX_NUM_ORDERS":
-                row['maxNumOrders'] = filter['limit']
+                row["maxNumOrders"] = filter["limit"]
             elif filterType in filters_to_ignore:
                 pass
             else:
@@ -170,12 +170,10 @@ def main():
     coin_df = parse_binance_spot_exchange_info(fn)
 
     fn = "binance_usdfut_exchange-info.json"
-    futures_df = parse_binance_usdfut_exchange_info(fn,
-                                                    venue = "binance_usdfut")
+    futures_df = parse_binance_usdfut_exchange_info(fn, venue="binance_usdfut")
 
     fn = "binance_coinfut_exchange-info.json"
-    coinfut_df = parse_binance_usdfut_exchange_info(fn,
-                                                    venue = "binance_coinfut")
+    coinfut_df = parse_binance_usdfut_exchange_info(fn, venue="binance_coinfut")
 
     df = pd.concat([coin_df, futures_df, coinfut_df], sort=False)
     df.set_index("assetid", inplace=True, verify_integrity=True)
@@ -183,6 +181,7 @@ def main():
     outfn = "binance_assets.csv"
     logging.info("writing csv file to '{}'".format(outfn))
     df.to_csv(outfn)
+
 
 if __name__ == "__main__":
     main()

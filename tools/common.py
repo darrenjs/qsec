@@ -15,7 +15,7 @@ def save_dateframe(
     sid: str,
     venue: str,
     dtype: str,
-    interval: str
+    interval: str,
 ):
     date_str = date.strftime("%Y%m%d")
     home = str(Path.home())
@@ -25,7 +25,13 @@ def save_dateframe(
     fn = f"{path}/{sid}-{interval}-{date_str}.parq"
 
     # meta
-    custom_meta = {"venue": venue, "symbol": symbol, "sid": sid, "dtype": dtype, "interval": interval}
+    custom_meta = {
+        "venue": venue,
+        "symbol": symbol,
+        "sid": sid,
+        "dtype": dtype,
+        "interval": interval,
+    }
     custom_meta_key = "qsec"
     table = pa.Table.from_pandas(df)
     custom_meta_json = json.dumps(custom_meta)

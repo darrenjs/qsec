@@ -84,7 +84,7 @@ def normalise_klines(df):
         "ignore",
     ]
 
-    if (df.empty):
+    if df.empty:
         return pd.DataFrame(columns=columns)
 
     df = df.copy()
