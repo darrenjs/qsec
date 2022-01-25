@@ -7,6 +7,7 @@ import logging
 import pyarrow as pa
 import pyarrow.parquet as pq
 import os, sys
+from tqdm import tqdm
 import numpy as np
 import argparse
 
@@ -102,8 +103,14 @@ def normalise_klines(df):
     ]:
         df[col] = df[col].astype("float")
     df["time"] = df["closeTime"]
-    df.set_index("time", inplace=True, verify_integrity=True)
-    df.sort_index(inplace=True)
+    try:
+        df.set_index("time", inplace=True, verify_integrity=True)
+    except ValueError:
+        logging.warning("duplicate time values in dataframe, dropping duplicates")
+        logging.warning("duplicate values: {}".format(df.index.duplicated()))
+        df.drop_duplicates(inplace=True)
+        df.set_index("time", inplace=True, verify_integrity=True)
+        df.sort_index(inplace=True)
     df.drop(["ignore"], axis=1, inplace=True)
     return df
 
@@ -171,7 +178,7 @@ def fetch_klines_for_date(symbol: str, kline_date: dt.date, interval: str):
 
 def fetch(symbol: str, fromDt: dt.date, endDt: dt.date, sid: str, interval: str):
     dates = qsec.time.dates_in_range(fromDt, endDt)
-    for d in dates:
+    for d in tqdm(dates):
         df = fetch_klines_for_date(symbol, d, interval)
         common.save_dateframe(
             symbol, d, df, sid, "binance", f"bars-{interval}", interval
