@@ -15,17 +15,25 @@ def save_dateframe(
     sid: str,
     venue: str,
     dtype: str,
-    interval: str
+    interval: str = None # will be None for Trades
 ):
     date_str = date.strftime("%Y%m%d")
     home = str(Path.home())
     path = f"{home}/MDHOME/tickdata-parq/{dtype}/{venue}/{sid}/{date_str}"
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
-    fn = f"{path}/{sid}-{interval}-{date_str}.parq"
 
-    # meta
-    custom_meta = {"venue": venue, "symbol": symbol, "sid": sid, "dtype": dtype, "interval": interval}
+    # for bar data, we embedd the bar interval into the file path
+    interval_str = f"{interval}-" if interval is not None else ""
+    fn = f"{path}/{sid}{interval_str}-{date_str}.parq"
+
+    # Meta-data.  Note the unique symbol ID was previously named 'sid', but has
+    # now been renamed to 'usid'.  So for loading dataframes, both 'sid' and
+    # 'usid' should be considered.
+    custom_meta = {"venue": venue, "symbol": symbol, "usid": sid, "dtype":
+                   dtype}
+    if interval is not None:
+        custom_meta["interval"] = interval
     custom_meta_key = "qsec"
     table = pa.Table.from_pandas(df)
     custom_meta_json = json.dumps(custom_meta)
