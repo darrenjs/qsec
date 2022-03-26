@@ -8,6 +8,23 @@ import json
 from pathlib import Path
 
 
+def build_md_item_filename(
+        assetid: str,
+        date: dt.date,
+        dtype: str,
+        venue: str,
+        interval: str = None, # will be None for Trades
+):
+    date_str = date.strftime("%Y%m%d")
+    home = str(Path.home())
+    path = f"{home}/MDHOME/tickdata-parq/{dtype}/{venue}/{assetid}/{date_str}"
+
+    # for bar data, we embedd the bar interval into the file path
+    interval_str = f"-{interval}" if interval is not None else ""
+    fn = f"{path}/{assetid}{interval_str}-{date_str}.parq"
+    return fn
+
+
 def save_dateframe(
     symbol: str,
     date: dt.date,
@@ -17,15 +34,11 @@ def save_dateframe(
     dtype: str,
     interval: str = None # will be None for Trades
 ):
-    date_str = date.strftime("%Y%m%d")
-    home = str(Path.home())
-    path = f"{home}/MDHOME/tickdata-parq/{dtype}/{venue}/{sid}/{date_str}"
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
-
-    # for bar data, we embedd the bar interval into the file path
-    interval_str = f"{interval}-" if interval is not None else ""
-    fn = f"{path}/{sid}{interval_str}-{date_str}.parq"
+    fn = build_md_item_filename(sid, date, dtype, venue, interval)
+    dirname = os.path.dirname(fn)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname, exist_ok=True)
+    del dirname
 
     # Meta-data.  Note the unique symbol ID was previously named 'sid', but has
     # now been renamed to 'usid'.  So for loading dataframes, both 'sid' and

@@ -1,7 +1,7 @@
 import datetime as dt
 import pytz
 import time
-from typing import Optional
+from typing import Optional, Union
 
 
 def short_fmt(date: dt.date) -> str:
@@ -19,7 +19,11 @@ def date_to_datetime(
     )
 
 
-def date_range(lower: dt.date, upper: dt.date):
+def date_range(lower: Union[dt.date, str], upper: Union[dt.date, str]):
+    if isinstance(lower, str):
+        lower = to_date(lower)
+    if isinstance(upper, str):
+        upper = to_date(upper)
     while lower < upper:
         yield lower
         lower += dt.timedelta(days=1)

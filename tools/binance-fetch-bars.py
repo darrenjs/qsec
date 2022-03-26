@@ -174,7 +174,7 @@ def fetch(symbol: str, fromDt: dt.date, endDt: dt.date, sid: str, interval: str)
     for d in dates:
         df = fetch_klines_for_date(symbol, d, interval)
         common.save_dateframe(
-            symbol, d, df, sid, "binance", f"bars-{interval}", interval
+            symbol, d, df, sid, "binance", f"bars{interval}", f"bars{interval}"
         )
 
 

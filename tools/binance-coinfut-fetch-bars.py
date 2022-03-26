@@ -17,7 +17,6 @@ import common
 
 api = "https://dapi.binance.com"
 
-
 def call_http_fetch_klines(
     symbol, startTime: int, endTime: int, interval: str = "1m", limit: int = 1500
 ):
@@ -145,10 +144,15 @@ def fetch_klines_for_date(symbol: str, kline_date: dt.date, interval: str):
 
 def fetch(symbol: str, fromDt: dt.date, endDt: dt.date, sid: str, interval: str):
     dates = qsec.time.dates_in_range(fromDt, endDt)
+    venue = "binance_coinfut"
     for d in dates:
+        fn = common.build_md_item_filename(sid, d, f"bars{interval}", venue, f"bars{interval}")
+        if os.path.exists(fn):
+            logging.info("data item exists, skipping: '{}'".format(fn))
+            continue
         df = fetch_klines_for_date(symbol, d, interval)
         common.save_dateframe(
-            symbol, d, df, sid, "binance_coinfut", f"bars-{interval}", interval
+            symbol, d, df, sid, venue, f"bars{interval}", f"bars{interval}"
         )
 
 
